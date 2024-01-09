@@ -3,7 +3,9 @@ package Users;
 import IMDB.IMDB;
 import Requests.Request;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -26,51 +28,59 @@ public class Admin extends Staff{
         boolean running = true;
         while(running){
             System.out.println("Enter email: ");
-            String email = scanner.next();
+            String email = scanner.nextLine();
             System.out.println("Enter password: ");
-            String password = scanner.next();
+            String password = scanner.nextLine();
             System.out.println("Enter name:");
-            String name = scanner.next();
+            String name = scanner.nextLine();
             System.out.println("Enter country:");
-            String country = scanner.next();
+            String country = scanner.nextLine();
             System.out.println("Enter age:");
-            int age = scanner.nextInt();
+            int age = 0;
+            try {
+                age = scanner.nextInt();
+            }catch (Exception e){}
+            scanner.nextLine();
             System.out.println("Enter gender: ");
-            String gender = scanner.next();
+            String gender = scanner.nextLine();
             System.out.println("Enter birth date: ");
-            String birthDate = scanner.next();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            String birthDate = scanner.nextLine();
             System.out.println("Is this information correct? ");
             System.out.println("email: " + email + "\n"
-                                + "Password: " + password + "\n"
-                                + "Name: " + name + "\n"
-                                + "Country: " + country + "\n"
-                                + "Age: " + age + "\n"
-                                + "Gender: " + gender + "\n"
-                                + "Birth date: " + birthDate + "\n"
-                                + "(y/n)");
-            switch (scanner.next().charAt(0)){
+                    + "Password: " + password + "\n"
+                    + "Name: " + name + "\n"
+                    + "Country: " + country + "\n"
+                    + "Age: " + age + "\n"
+                    + "Gender: " + gender + "\n"
+                    + "Birth date: " + birthDate + "\n"
+                    + "(y/n)");
+            switch (scanner.nextLine().charAt(0)) {
                 case 'y':
-                    User.Information.InformationBuilder informationBuilder = new User.Information.InformationBuilder();
-                    informationBuilder.setCredentials(new Credentials(email, password))
-                            .setAge(age)
-                            .setBirthDate(LocalDateTime.parse(birthDate))
-                            .setCountry(country)
-                            .setGender(gender)
-                            .setId(instance.getUsers().size()+1)
-                            .setName(name)
-                            .setUserName(name);
-                    User user = userFactory.createUser(accountType, informationBuilder.build());
-                    instance.getUsers().add(user);
+                    try {
+                        User.Information.InformationBuilder informationBuilder = new User.Information.InformationBuilder();
+                        informationBuilder.setCredentials(new Credentials(email, password))
+                                .setAge(age)
+                                .setBirthDate(LocalDate.parse(birthDate, formatter))
+                                .setCountry(country)
+                                .setGender(gender)
+                                .setId(instance.getUsers().size() + 1)
+                                .setName(name)
+                                .setUserName(name);
+                        User user = userFactory.createUser(accountType, informationBuilder.build());
+                        instance.getUsers().add(user);
+                        System.out.println("User added succesfully!");
+                    }catch (Exception e){}
                     running = false;
                     break;
                 case 'n':
+                    running =false;
                     break;
                 default:
                     System.out.println("Invalid input!");
                     break;
             }
         }
-
     }
 
     public List<User> getUsersAdded() {

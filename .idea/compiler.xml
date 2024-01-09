@@ -2,7 +2,7 @@
 <project version="4">
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="IMDB-app" options="--add-exports java.security.jgss/org=ALL-UNNAMED" />
+      <module name="IMDB-app" options="--add-exports java.security.jgss/org=ALL-UNNAMED --add-exports java.desktop/sun.awt.shell=ALL-UNNAMED" />
     </option>
   </component>
 </project>

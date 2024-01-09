@@ -95,6 +95,7 @@ public abstract class Production implements T, Subject {
     }
 
     public double getAvgRating() {
+        this.updateAvgRating();
         return avgRating;
     }
 

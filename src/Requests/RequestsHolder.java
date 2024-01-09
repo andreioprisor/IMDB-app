@@ -38,35 +38,45 @@ public class RequestsHolder  {
         List<User> users = instance.getUsers();
         switch (type){
             case MOVIE_ISSUE, ACTOR_ISSUE:
+                boolean found = false;
                 for(User user : users)
                     if (user instanceof Staff ) {
                         for (T t : ((Staff) user).getProductionsAndActors()) {
                             if (t.getName().compareTo(productionTitle) == 0) {
+                                found = true;
                                 r.setSolverUsername(user.getInformation().getUserName());
+                                System.out.println(user.getInformation().getUserName());
+                                ((Staff) user).getRequests().add(r);
                                 user.notifyUser("A new request has been assigned to you" + "( " + type + " " + t.getName() + ")");
                                 break;
                             }
                         }
                     }
+                if(!found){
+                    System.out.println("Production not found!");
+                }
                 break;
             case DELETE_ACCOUNT:
-                for(User user : users)
-                    if (user instanceof Admin ) {
+                for(User user : users) {
+                    if (user instanceof Admin) {
                         for (User u : ((Admin) user).getUsersAdded()) {
+                            System.out.println(u.getInformation().getUserName() + "compared to " + userName + "\n");
                             if (u.getInformation().getUserName().compareTo(userName) == 0) {
                                 r.setSolverUsername(user.getInformation().getUserName());
+                                System.out.println(user.getInformation().getUserName());
                                 user.notifyUser("A new request has been assigned to you: ( DELETE_ACCOUNT " + userName + ")");
                                 break;
                             }
                         }
                         r.setSolverUsername(user.getInformation().getUserName());
-                        break;
                     }
+                }
                 break;
             case OTHERS:
                 for (User user : users)
                     if (user instanceof StaffInterface) {
                         r.setSolverUsername(user.getInformation().getUserName());
+                        System.out.println(user.getInformation().getUserName());
                         user.notifyUser("A new request has been assigned to you: ( OTHERS " + userName + ")");
                         break;
                     }

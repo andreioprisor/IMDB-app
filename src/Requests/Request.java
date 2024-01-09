@@ -7,6 +7,7 @@ public class Request {
     private LocalDateTime dateTime;
     private String userName;
     private String productionTitle;
+    private String description;
     private String solverUsername;
 
     public String getDescription() {
@@ -24,8 +25,6 @@ public class Request {
     public void setName(String name) {
         this.userName = name;
     }
-
-    private String description;
 
     public LocalDateTime getDateTime() {
         return dateTime;

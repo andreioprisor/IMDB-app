@@ -11,6 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -93,8 +94,8 @@ public class IMDB {
     public void updateActorMethod(User user) {
         System.out.println("Enter actor name: ");
         Scanner scanner = new Scanner(System.in);
-        String actorName = scanner.next();
-        Actor actor1 = null;
+        String actorName = scanner.nextLine();
+        Actor actor1 = new Actor();
         for (Actor a : instance.getActors()){
             if ( a.getName().compareTo(actorName) == 0 ){
                 actor1 = a;
@@ -107,26 +108,30 @@ public class IMDB {
             System.out.println("  3. Productions");
             try {
                 int choice = scanner.nextInt();
+                scanner.nextLine();
                 switch (choice){
                     case 1:
                         System.out.println("Enter new name: ");
-                        String newName = scanner.next();
+                        String newName = scanner.nextLine();
                         actor1.setName(newName);
                         break;
                     case 2:
                         System.out.println("Enter new biography: ");
-                        String newBiography = scanner.next();
+                        String newBiography = scanner.nextLine();
                         actor1.setBiography(newBiography);
                         break;
                     case 3:
                         System.out.println("Enter number of productions: ");
                         int noProductions = scanner.nextInt();
-                        List<String> productions = null;
+                        scanner.nextLine();
                         for (int i = 0; i < noProductions; i++) {
                             System.out.println("Enter production name: ");
-                            productions.add(scanner.next());
+                            String prod = scanner.nextLine();
                             System.out.println("Enter production type: ");
-                            String userInput = scanner.next().toUpperCase();
+                            String userInput = scanner.nextLine().toUpperCase();
+                            try {
+                                actor1.getProductions().put(prod, ProductionType.valueOf(userInput));
+                            }catch (Exception e){}
                         }
                         ((Staff) user).updateActor(actor1);
                         break;
@@ -147,7 +152,7 @@ public class IMDB {
     public void updateProductionMethod(User user) {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter production name: ");
-        String name = scanner.next();
+        String name = scanner.nextLine();
         Production production = null;
         for (Production prod : instance.getMovies()){
             if ( prod.getTitle().compareTo(name) == 0 ){
@@ -168,55 +173,53 @@ public class IMDB {
             System.out.println("  5. Genres");
             try {
                 int choice = scanner.nextInt();
+                scanner.nextLine();
                 switch (choice){
                     case 1:
                         System.out.println("Enter new title: ");
-                        String newTitle = scanner.next();
+                        String newTitle = scanner.nextLine();
                         production.setTitle(newTitle);
                         break;
                     case 2:
                         System.out.println("Enter number of actors: ");
                         int noActors = scanner.nextInt();
-                        List<String> actors = null;
+                        scanner.nextLine();
                         for (int i = 0; i < noActors; i++) {
                             System.out.println("Enter actor: ");
-                            actors.add(scanner.next());
+                            production.getActors().add(scanner.nextLine());
                         }
-                        production.setActors(actors);
                         break;
                     case 3:
                         System.out.println("Enter number of regisors: ");
                         int noRegisors = scanner.nextInt();
-                        List<String> regisors = null;
+                        scanner.nextLine();
                         for (int i = 0; i < noRegisors; i++) {
                             System.out.println("Enter regisor: ");
-                            regisors.add(scanner.next());
+                            production.getRegisors().add(scanner.nextLine());
                         }
-                        production.setRegisors(regisors);
                         break;
                     case 4:
                         System.out.println("Enter number of genres: ");
                         int noGenres = scanner.nextInt();
-                        List<Genre> genres = null;
+                        scanner.nextLine();
                         for (int i = 0; i < noGenres; i++) {
                             System.out.println("Enter genre: ");
-                            Genre genre = Genre.valueOf(scanner.next());
+                            Genre genre = Genre.valueOf(scanner.nextLine());
                             boolean correct = false;
                             while (!correct) {
                                 for (int j = 0; j < Genre.values().length; j++) {
                                     if (genre == Genre.values()[j]) {
-                                        genres.add(genre);
+                                        production.getGenres().add(genre);
                                         correct = true;
                                         break;
                                     }
                                 }
                                 if (!correct) {
                                     System.out.println("Invalid genre! Try again: ");
-                                    genre = Genre.valueOf(scanner.next());
+                                    genre = Genre.valueOf(scanner.nextLine());
                                 }
                             }
                         }
-                        production.setGenres(genres);
                         ((Staff) user).updateProduction(production);
                         break;
                     default:
@@ -234,15 +237,27 @@ public class IMDB {
 
     public void requestSolver (User user) {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Choose request: ");
+        System.out.println("Those are your requests: \n");
         int i = 1;
-        for (Request r : ((Staff) user).getRequests()) {
-            System.out.println(String.valueOf(i) + ". " + r.getDescription() + "\n");
+        for (Request request : ((Staff) user).getRequests()) {
+            System.out.println(i + ". " + request.getName());
+            System.out.println("Description: " + request.getDescription());
+            System.out.println("Date: " + request.getDateTime());
+            System.out.println("ProductionTitle: " + request.getProductionTitle());
+            System.out.println("");
             i++;
         }
-        int choice = scanner.nextInt();
-        Request r = ((Staff) user).getRequests().get(choice - 1);
-        ((Staff) user).solveRequest(r);
+        if(i==1){
+            System.out.println("You don't have any request!\n");
+            return;
+        }
+        System.out.println("Choose action: (Enter the request index)");
+        try {
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+            Request r = ((Staff) user).getRequests().get(choice - 1);
+            ((Staff) user).solveRequest(r);
+        } catch (Exception e){}
     }
 
     public void addProductionIMDB(User user) {
@@ -253,48 +268,54 @@ public class IMDB {
             System.out.println("  1. Movie");
             System.out.println("  2. Series");
             System.out.println("  3. Go back");
-            switch (scanner.nextInt()) {
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+            switch (choice) {
                 case 1:
                     try {
                         Movies movie = new Movies();
 
                         System.out.println("Enter movie duration: ");
-                        String duration = scanner.next();
+                        String duration = scanner.nextLine();
                         movie.setDuration(duration);
 
                         System.out.println("Enter movie year: ");
                         int year = scanner.nextInt();
+                        scanner.nextLine();
                         movie.setYear(year);
 
                         System.out.println("Enter movie name: ");
-                        String name = scanner.next();
+                        String name = scanner.nextLine();
                         movie.setTitle(name);
 
                         System.out.println("Enter number of genres: ");
                         int noGenres = scanner.nextInt();
+                        scanner.nextLine();
                         for (int i = 0; i < noGenres; i++) {
                             System.out.println("Enter genre: ");
-                            String userInput = scanner.next().toUpperCase();
+                            String userInput = scanner.nextLine().toUpperCase();
                             Genre genre = Genre.valueOf(userInput);
                             movie.getGenres().add(genre);
                         }
 
                         System.out.println("Enter subject:  ");
-                        movie.setSubject(scanner.next());
+                        movie.setSubject(scanner.nextLine());
 
                         System.out.println("Enter number of regisors: ");
                         int noRegisors = scanner.nextInt();
+                        scanner.nextLine();
                         for (int i = 0; i < noRegisors; i++) {
                             System.out.println("Enter regisor: ");
-                            String regisor = scanner.next();
+                            String regisor = scanner.nextLine();
                             movie.getRegisors().add(regisor);
                         }
 
                         System.out.println("Enter number of actors: ");
                         int noActors = scanner.nextInt();
+                        scanner.nextLine();
                         for (int i = 0; i < noActors; i++) {
                             System.out.println("Enter actor: ");
-                            String actor = scanner.next();
+                            String actor = scanner.nextLine();
                             movie.getActors().add(actor);
                         }
 
@@ -305,7 +326,7 @@ public class IMDB {
                                 + "Regisors: " + movie.getRegisors() + "\n"
                                 + "Actors: " + movie.getActors() + "\n"
                                 + "Genres: " + movie.getGenres() + "\n");
-                        switch (scanner.next().charAt(0)) {
+                        switch (scanner.nextLine().charAt(0)) {
                             case 'y':
                                 instance.getMovies().add(movie);
                                 ((Staff) user).addProductionSystem(movie);
@@ -328,53 +349,59 @@ public class IMDB {
                     try {
                         System.out.println("Enter serie year: ");
                         int year = scanner.nextInt();
+                        scanner.nextLine();
                         series.setYear(year);
 
                         System.out.println("Enter serie name: ");
-                        String name = scanner.next();
+                        String name = scanner.nextLine();
                         series.setTitle(name);
 
                         System.out.println("Enter number of genres: ");
                         int noGenres = scanner.nextInt();
+                        scanner.nextLine();
                         for (int i = 0; i < noGenres; i++) {
                             System.out.println("Enter genre: ");
-                            String userInput = scanner.next().toUpperCase();
+                            String userInput = scanner.nextLine().toUpperCase();
                             Genre genre = Genre.valueOf(userInput);
                             series.getGenres().add(genre);
                         }
 
                         System.out.println("Enter subject:  ");
-                        series.setSubject(scanner.next());
+                        series.setSubject(scanner.nextLine());
 
                         System.out.println("Enter number of regisors: ");
                         int noRegisors = scanner.nextInt();
+                        scanner.nextLine();
                         for (int i = 0; i < noRegisors; i++) {
                             System.out.println("Enter regisor: ");
-                            String regisor = scanner.next();
+                            String regisor = scanner.nextLine();
                             series.getRegisors().add(regisor);
                         }
 
                         System.out.println("Enter number of actors: ");
                         int noActors = scanner.nextInt();
+                        scanner.nextLine();
                         for (int i = 0; i < noActors; i++) {
                             System.out.println("Enter actor: ");
-                            String actor = scanner.next();
+                            String actor = scanner.nextLine();
                             series.getActors().add(actor);
                         }
 
                         System.out.println("Enter number of seasons: ");
                         int noSeasons = scanner.nextInt();
+                        scanner.nextLine();
                         for (int i = 0; i < noSeasons; i++) {
                             System.out.println("Enter season name: ");
-                            String seasonName = scanner.next();
+                            String seasonName = scanner.nextLine();
                             System.out.println("Enter number of episodes: ");
                             int noEpisodes = scanner.nextInt();
+                            scanner.nextLine();
                             List<Episode> episodes = new ArrayList<>();
                             for (int j = 0; j < noEpisodes; j++) {
                                 System.out.println("Enter episode name: ");
-                                String episodeName = scanner.next();
+                                String episodeName = scanner.nextLine();
                                 System.out.println("Enter episode duration: ");
-                                String episodeDuration = scanner.next();
+                                String episodeDuration = scanner.nextLine();
                                 Episode episode = new Episode(episodeName, episodeDuration);
                                 episodes.add(episode);
                             }
@@ -388,7 +415,7 @@ public class IMDB {
                                 + "Actors: " + series.getActors() + "\n"
                                 + "Genres: " + series.getGenres() + "\n"
                                 + "Series: " + series.getSeries() + "\n");
-                        switch (scanner.next().charAt(0)) {
+                        switch (scanner.nextLine().charAt(0)) {
                             case 'y':
                                 ((Staff) user).addProductionSystem(series);
                                 instance.getSeries().add(series);
@@ -425,23 +452,24 @@ public class IMDB {
         while(continueEditingActor) {
             try {
                 System.out.println("Enter actor name: ");
-                actor.setName(scanner.next());
+                actor.setName(scanner.nextLine());
                 System.out.println("Enter actor biography: ");
-                actor.setBiography(scanner.next());
+                actor.setBiography(scanner.nextLine());
                 System.out.println("Enter number of productions: ");
                 int noProductions = scanner.nextInt();
+                scanner.nextLine();
                 for (int i = 0; i < noProductions; i++) {
                     System.out.println("Enter production name: ");
-                    String prod = scanner.next();
+                    String prod = scanner.nextLine();
                     System.out.println("Enter production type: ");
-                    String type = scanner.next().toUpperCase();
+                    String type = scanner.nextLine().toUpperCase();
                     actor.getProductions().put(prod, ProductionType.valueOf(type));
                 }
                 System.out.println("Is this information correct? (y/n):");
                 System.out.println("Name: " + actor.getName() + "\n"
                         + "Biography: " + actor.getBiography() + "\n"
                         + "Productions: " + actor.getProductions().toString() + "\n");
-                switch (scanner.next().charAt(0)) {
+                switch (scanner.nextLine().charAt(0)) {
                     case 'y':
                         ((Staff) user).addActorSystem(actor);
                         continueEditingActor = false;
@@ -473,7 +501,9 @@ public class IMDB {
             System.out.println("  6. Exit");
             int i;
             try {
-                switch (scanner.nextInt()) {
+                int ch = scanner.nextInt();
+                scanner.nextLine();
+                switch (ch) {
                     case 1:
                         i = 0;
                         for (Actor a : actors) {
@@ -655,6 +685,7 @@ public class IMDB {
                                     System.out.println("  12. Thriller");
                                     System.out.println("  13. Western");
                                     int genreChoice = scanner.nextInt();
+                                    scanner.nextLine();
                                     Genre genre = null;
                                     switch (genreChoice) {
                                         case 1:
@@ -846,78 +877,103 @@ public class IMDB {
             System.out.println("  11. Remove user");
             System.out.println("  12. View notifications");
             System.out.println("  13. Log out");
-            switch (scanner.nextInt()) {
-                case 1:
-                    instance.addProductionIMDB(admin);
-                    break;
-                case 2:
-                    instance.addActorIMDB(admin);
-                    break;
-                case 3:
-                    System.out.println("Enter production name: ");
-                    admin.removeProductionSystem(scanner.nextLine());
-                    break;
-                case 4:
-                    System.out.println("Enter actor name: ");
-                    admin.removeActorSystem(scanner.nextLine());
-                    break;
-                case 5:
-                    instance.updateProductionMethod(admin);
-                    break;
-                case 6:
-                    instance.updateActorMethod(admin);
-                    break;
-                case 7:
-                    instance.requestSolver(admin);
-                    break;
-                case 8:
-                    for(Actor a: actors){
-                        a.displayInfo();
-                    }
-                    break;
-                case 9:
-                    for(Movies m: movies){
-                        m.displayInfo();
-                    }
-                    for(Series s: series){
-                        s.displayInfo();
-                    }
-                    break;
-                case 10:
-                    System.out.println("Choose user type: ");
-                    System.out.println("  1. Regular");
-                    System.out.println("  2. Contributor");
-                    System.out.println("  3. Admin");
-                    switch (scanner.nextInt()){
-                        case 1:
-                            admin.addUser(AccountType.REGULAR);
-                            break;
-                        case 2:
-                            admin.addUser(AccountType.CONTRIBUTOR);
-                            break;
-                        case 3:
-                            admin.addUser(AccountType.ADMIN);
-                            break;
-                        default:
-                            System.out.println("Invalid option!");
-                            break;
-                    }
-                case 11:
-                    System.out.println("Enter id: ");
-                    admin.removeUser(scanner.nextInt());
-                case 12:
-                    for(String n: admin.getNotifications()){
-                        System.out.println(n);
-                    }
-                    break;
-                case 13:
-                    continueEditing = false;
-                    break;
+            try {
+                int ch = scanner.nextInt();
+                switch (ch) {
+                    case 1:
+                        instance.addProductionIMDB(admin);
+                        break;
+                    case 2:
+                        instance.addActorIMDB(admin);
+                        break;
+                    case 3:
+                        System.out.println("Enter production name: ");
+                        admin.removeProductionSystem(scanner.nextLine());
+                        break;
+                    case 4:
+                        System.out.println("Enter actor name: ");
+                        admin.removeActorSystem(scanner.nextLine());
+                        break;
+                    case 5:
+                        instance.updateProductionMethod(admin);
+                        break;
+                    case 6:
+                        instance.updateActorMethod(admin);
+                        break;
+                    case 7:
+                        instance.requestSolver(admin);
+                        break;
+                    case 8:
+                        for (Actor a : actors) {
+                            a.displayInfo();
+                        }
+                        break;
+                    case 9:
+                        for (Movies m : movies) {
+                            m.displayInfo();
+                        }
+                        for (Series s : series) {
+                            s.displayInfo();
+                        }
+                        break;
+                    case 10:
+                        System.out.println("Choose user type: ");
+                        System.out.println("  1. Regular");
+                        System.out.println("  2. Contributor");
+                        System.out.println("  3. Admin");
+                        switch (scanner.nextInt()) {
+                            case 1:
+                                admin.addUser(AccountType.REGULAR);
+                                break;
+                            case 2:
+                                admin.addUser(AccountType.CONTRIBUTOR);
+                                break;
+                            case 3:
+                                admin.addUser(AccountType.ADMIN);
+                                break;
+                            default:
+                                System.out.println("Invalid option!");
+                                break;
+                        }
+                        break;
+                    case 11:
+                        System.out.println("Enter userName: ");
+                        String userName = scanner.nextLine();
+                        int i = 0;
+                        boolean foundUser = false;
+                        for (User user : this.getUsers()) {
+                            if (user.getUsername().compareTo(userName) == 0 && user instanceof Staff) {
+                                for (T t : ((Staff)user).getProductionsAndActors()){
+                                    for (User u: this.getUsers()){
+                                        if(u instanceof Admin){
+                                            ((Admin) u).getProductionsAndActors().add(t);
+                                        }
+                                    }
+                                }
+                                this.getUsers().remove(i);
+                                foundUser = true;
+                                System.out.println("User removed succesfully!");
+                                break;
+                            }
+                        }
+                        if (!foundUser) {
+                            System.out.println("User not found!");
+                        }
+                        break;
+                    case 12:
+                        for (String n : admin.getNotifications()) {
+                            System.out.println(n);
+                        }
+                        break;
+                    case 13:
+                        continueEditing = false;
+                        break;
 
-                default:
-                    System.out.println("Invalid option!");
-                    break;
-            }
+                    default:
+                        System.out.println("Invalid option!");
+                        break;
+                }
+            } catch (Exception e){}
         }
     }
 
@@ -1033,10 +1089,10 @@ public class IMDB {
         }
     }
 
-    private void loadActors() {
+    public void loadActors() {
         try {
             // Replace the file path with the actual path to your actors.json file
-            String content = new String(Files.readAllBytes(Paths.get("/home/oprisorandrei/ANUL2/IMDB-app/actors.json")));
+            String content = new String(Files.readAllBytes(Paths.get("/home/oda/ANUL2/IMDB-app/src/actors.json")));
             JSONArray actorsArray = new JSONArray(content);
 
             for (int i = 0; i < actorsArray.length(); i++) {
@@ -1058,9 +1114,9 @@ public class IMDB {
             // Handle exception
         }
     }
-    private void loadProductions() {
+    public void loadProductions() {
         try {
-            String content = new String(Files.readAllBytes(Paths.get("/home/oprisorandrei/ANUL2/IMDB-app/production.json")));
+            String content = new String(Files.readAllBytes(Paths.get("/home/oda/ANUL2/IMDB-app/src/production.json")));
             JSONArray productionsArray = new JSONArray(content);
 
             for (int i = 0; i < productionsArray.length(); i++) {
@@ -1166,7 +1222,7 @@ public class IMDB {
 
     public void loadRequests() {
         try {
-            String content = new String(Files.readAllBytes(Paths.get("/home/oprisorandrei/ANUL2/IMDB-app/requests.json")));
+            String content = new String(Files.readAllBytes(Paths.get("/home/oda/ANUL2/IMDB-app/src/requests.json")));
             JSONArray requestsArray = new JSONArray(content);
             DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -1185,7 +1241,7 @@ public class IMDB {
         }
     }
 
-    private void addProductionToFavorites(String productionName, User user,
+    private void addProductionToContributors(String productionName, User user,
                                           List<Movies> movies, List<Series> series) {
         for (Movies m : movies) {
             if (m.getTitle().equalsIgnoreCase(productionName)) {
@@ -1201,7 +1257,7 @@ public class IMDB {
         }
     }
 
-    private void addActorToFavorites(String actorName, User user, List<Actor> actors) {
+    private void addActorToContributors(String actorName, User user, List<Actor> actors) {
         for (Actor a : actors) {
             if (a.getName().equalsIgnoreCase(actorName)) {
                 ((Staff) user).getProductionsAndActors().add(a);
@@ -1210,73 +1266,110 @@ public class IMDB {
         }
     }
 
+    private void addProductionToFavorites(String productionName, User user,
+                                             List<Movies> movies, List<Series> series) {
+        for (Movies m : movies) {
+            if (m.getTitle().equalsIgnoreCase(productionName)) {
+                ((Staff) user).getFavorites().add(m);
+                return;
+            }
+        }
+        for (Series s : series) {
+            if (s.getTitle().equalsIgnoreCase(productionName)) {
+                ((Staff) user).getFavorites().add(s);
+                return;
+            }
+        }
+    }
+
+    private void addActorToFavorites(String actorName, User user, List<Actor> actors) {
+        for (Actor a : actors) {
+            if (a.getName().equalsIgnoreCase(actorName)) {
+                ((Staff) user).getFavorites().add(a);
+                return;
+            }
+        }
+    }
+
     public void loadAccounts() {
+        JSONArray usersArray;
         try {
-            String content = new String(Files.readAllBytes(Paths.get("/home/oprisorandrei/ANUL2/IMDB-app/accounts.json")));
-            JSONArray usersArray = new JSONArray(content);
-            UserFactory userFactory = new UserFactory();
-            for (int i = 0; i < usersArray.length(); i++) {
-                JSONObject userJson = usersArray.getJSONObject(i);
-                System.out.println(userJson.optString("userType"));
-                User.Information.InformationBuilder informationBuilder = new User.Information.InformationBuilder();
-                JSONObject informationJson = userJson.getJSONObject("information");
-                JSONObject credentialsJson = informationJson.getJSONObject("credentials");
-                informationBuilder.setGender(informationJson.optString("gender"))
-                        .setCountry(informationJson.optString("country"))
-                        .setBirthDate(LocalDateTime.parse(informationJson.optString("birthDate")+"T00:00"))
-                        .setAge(informationJson.optInt("age"))
-                        .setName(informationJson.optString("name"))
-                        .setUserName(informationJson.optString("userName"))
-                        .setCredentials(new Credentials(credentialsJson.optString("email"), credentialsJson.optString("password")))
-                        .setId(informationJson.optInt("id"));
-                User.Information information = informationBuilder.build();
-                User user = userFactory.createUser(AccountType.valueOf(userJson.optString("userType").toUpperCase()), information);
+            String content = new String(Files.readAllBytes(Paths.get("/home/oda/ANUL2/IMDB-app/src/accounts.json")));
+            usersArray = new JSONArray(content);
+        }catch (Exception e){
+            e.printStackTrace();
+            return;
+        }
+        UserFactory userFactory = new UserFactory();
+        for (int i = 0; i < usersArray.length(); i++) {
+            JSONObject userJson = usersArray.getJSONObject(i);
+            User.Information.InformationBuilder informationBuilder = new User.Information.InformationBuilder();
+            JSONObject informationJson = userJson.getJSONObject("information");
+            JSONObject credentialsJson = informationJson.getJSONObject("credentials");
+            informationBuilder.setGender(informationJson.optString("gender"))
+                    .setCountry(informationJson.optString("country"))
+                    .setBirthDate(LocalDate.from(LocalDate.parse(informationJson.optString("birthDate"), DateTimeFormatter.ofPattern("yyyy-MM-dd"))))
+                    .setAge(informationJson.optInt("age"))
+                    .setName(informationJson.optString("name"))
+                    .setUserName(userJson.optString("username"))
+                    .setCredentials(new Credentials(credentialsJson.optString("email"), credentialsJson.optString("password")));
+            User.Information information = informationBuilder.build();
+            User user = userFactory.createUser(AccountType.valueOf(userJson.optString("userType").toUpperCase()), information);
+            try {
                 user.setExperience(userJson.optInt("experience"));
-                if (userJson.has("notifications")){
+                if (userJson.has("notifications")) {
                     JSONArray notificationsArray = userJson.getJSONArray("notifications");
-                    for (int j=0; j<notificationsArray.length();j++){
+                    for (int j = 0; j < notificationsArray.length(); j++) {
                         user.getNotifications().add(notificationsArray.getString(j));
                     }
                 }
+                System.out.println(user.getNotifications().toString());
+            }catch (Exception e) {}
+            // Adding productions to favorites
+            try {
                 JSONArray productionsArray, actorsArray;
+                productionsArray = userJson.getJSONArray("favoriteProductions");
+                for (int j = 0; j < productionsArray.length(); j++) {
+                    String production = productionsArray.getString(j);
+                    addProductionToFavorites(production, user, movies, series);
+                }
+            } catch (Exception e) {
+            }
 
+            // Ading actors to favorites
+            try {
+                JSONArray actorsArray = userJson.getJSONArray("favoriteActors");
+                for (int j = 0; j < actorsArray.length(); j++) {
+                    String actor = actorsArray.getString(j);
+                    addActorToFavorites(actor, user, actors);
+                }
+            } catch (Exception e) {
+            }
+
+            // Adding
+            if (userJson.optString("userType").equalsIgnoreCase("ADMIN") ||
+                    userJson.optString("userType").equalsIgnoreCase("CONTRIBUTOR")) {
                 try {
-                    productionsArray = userJson.getJSONArray("favoriteProductions");
+                    JSONArray productionsArray = userJson.getJSONArray("productionsContribution");
                     for (int j = 0; j < productionsArray.length(); j++) {
                         String production = productionsArray.getString(j);
-                        addProductionToFavorites(production, user, movies, series);
+                        addProductionToContributors(production, user, movies, series);
                     }
-
-                    actorsArray = userJson.getJSONArray("favoriteActors");
-                    for (int j = 0; j < actorsArray.length(); j++) {
-                        String actor = actorsArray.getString(j);
-                        addActorToFavorites(actor, user, actors);
-                    }
-
-                    if (userJson.optString("userType").equalsIgnoreCase("ADMIN") ||
-                            userJson.optString("userType").equalsIgnoreCase("CONTRIBUTOR")) {
-
-                        productionsArray = userJson.getJSONArray("productionsContribution");
-                        for (int j = 0; j < productionsArray.length(); j++) {
-                            String production = productionsArray.getString(j);
-                            addProductionToFavorites(production, user, movies, series);
-                        }
-
-                        actorsArray = userJson.getJSONArray("actorsContribution");
-                        for (int j = 0; j < actorsArray.length(); j++) {
-                            String actor = actorsArray.getString(j);
-                            addActorToFavorites(actor, user, actors);
-                        }
-                    }
-                    this.getUsers().add(user);
                 } catch (Exception e) {
                 }
-                this.getUsers().add(user);
+
+                try {
+                    JSONArray actorsArray = userJson.getJSONArray("actorsContribution");
+                    for (int j = 0; j < actorsArray.length(); j++) {
+                        String actor = actorsArray.getString(j);
+                        addActorToContributors(actor, user, actors);
+                    }
+                } catch (Exception e) {
+                }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            // Handle exception
+            this.getUsers().add(user);
         }
+
     }
     public static void main (String[] args){
         IMDB imdb = IMDB.getInstance();
@@ -1288,9 +1381,13 @@ public class IMDB {
         instance.loadProductions();
         instance.loadAccounts();
         instance.loadRequests();
-        for (User u: instance.getUsers()){
-            System.out.println(u.getInformation().getUserName());
-        }
+//        for (User u: instance.getUsers()){
+//            if (u instanceof Staff){
+//                System.out.println("Name : " + u.getInformation().getBirthDate());
+//                for (T t : ((Staff)u).getProductionsAndActors())
+//                    System.out.println(t.getName());
+//            }
+//        }
         imdb.run();
     }
 }

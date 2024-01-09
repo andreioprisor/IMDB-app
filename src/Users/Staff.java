@@ -6,6 +6,9 @@ import ProductionAndActors.Production;
 import ProductionAndActors.Series.Series;
 import ProductionAndActors.T;
 import Requests.Request;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.ArrayList;
@@ -19,6 +22,8 @@ import Users.Notifications.Observer;
 import Users.Strategy.ExperienceManager;
 import Users.Strategy.ProdActorStrategy;
 import Users.Strategy.RequestStrategy;
+
+import javax.swing.*;
 
 public class Staff extends User implements Observer {
     private List<Request> requests;
@@ -46,11 +51,14 @@ public class Staff extends User implements Observer {
         this.productionsAndActors = new TreeSet<>();
     }
 
-    public void addActorSystem(Actor a) {
+    public int addActorSystem(Actor a) {
         IMDB instance = IMDB.getInstance();
         if(instance == null){
             System.out.println("Instance null exception!");
-            return;
+            return 0;
+        }
+        if (instance.getActors().contains(a)) {
+            return 0;
         }
         instance.getActors().add(a);
         productionsAndActors.add(a);
@@ -58,30 +66,45 @@ public class Staff extends User implements Observer {
             ExperienceManager experienceManager = new ExperienceManager(new RequestStrategy());
             experienceManager.updateExperience(this);
         }
+        return 1;
     }
 
-    public void removeActorSystem(String name) {
+    public boolean removeActorSystem(String name) {
         IMDB instance = IMDB.getInstance();
         if (instance == null) {
             System.out.println("Instance null exception!");
-            return;
+            return false;
         }
+        boolean found = false;
+        for (T t : productionsAndActors) {
+            if (t.getName().equals(name)) {
+                found = true;
+                productionsAndActors.remove(t);
+                break;
+            }
+        }
+        if(!found&&this instanceof Contributor){
+            System.out.println("Actor not found!");
+            return false;
+        }
+
         int i = 0;
         for(Actor actor: instance.getActors()){
             if(name.compareTo(actor.getName())==0){
                 instance.getActors().remove(i);
-                return;
+                return true;
             }
             i++;
         }
         System.out.println("Actor not found!");
+        return false;
     }
 
-    public void addProductionSystem(Production p) {
+    public int addProductionSystem(Production p) {
         IMDB instance = IMDB.getInstance();
         if(instance == null){
             System.out.println("Instance null exception!");
-            return;
+            return 0;
         }
         if(p instanceof Movies){
             Movies movie = (Movies)p;
@@ -91,23 +114,38 @@ public class Staff extends User implements Observer {
             instance.getSeries().add(serie);
         } else {
             System.out.println("Production type not found!");
-            return;
+            return 0;
         }
         productionsAndActors.add(p);
         if (this.getExperience() < Integer.MAX_VALUE ) {
             ExperienceManager experienceManager = new ExperienceManager(new ProdActorStrategy());
             experienceManager.updateExperience(this);
         }
+        return 1;
     }
 
-    public void removeProductionSystem(String name) {
+    public boolean  removeProductionSystem(String name) {
+
+        boolean found = false;
+        for (T t : productionsAndActors) {
+            if (t.getName().equals(name)) {
+                found = true;
+                productionsAndActors.remove(t);
+                break;
+            }
+        }
+        if(this instanceof Contributor && !found){
+            System.out.println("Production not found!");
+            return false;
+        }
+
         IMDB instance = IMDB.getInstance();
         int i = 0;
         List<Movies> movies = instance.getMovies();
         for(Production movie: movies){
             if(name.compareTo(movie.getName())==0){
                 instance.getMovies().remove(i);
-                return;
+                return true;
             }
             i++;
         }
@@ -116,11 +154,12 @@ public class Staff extends User implements Observer {
         for(Series serie: series){
             if(name.compareTo(serie.getName())==0){
                 instance.getSeries().remove(i);
-                return;
+                return false;
             }
             i++;
         }
         System.out.println("Production not found!");
+        return false;
     }
 
     public void updateActor(Actor a) {
@@ -180,47 +219,27 @@ public class Staff extends User implements Observer {
             System.out.println("Instance null exception!");
             return;
         }
-        System.out.println("Those are your requests: \n");
-        int i = 1;
-        for (Request request : requests) {
-            System.out.println(i + ". " + request.getName());
-            System.out.println("Description: " + request.getDescription());
-            System.out.println("Date: " + request.getDateTime());
-            System.out.println("ProductionTitle: " + request.getProductionTitle());
-            System.out.println("");
-            i++;
-        }
-
-        System.out.println("Choose action: ");
-        System.out.println("  1. Solve request");
+        System.out.println("  1. Solve a request");
         System.out.println("  2. Reject request");
         Scanner scanner = new Scanner(System.in);
         RequestsHolder requestsHolder = instance.getRequestsHolder();
         switch (scanner.nextInt()){
             case 1:
-                i = 0;
+                boolean found = false;
                 for (User user : instance.getUsers()) {
                     if (user.getInformation().getName().compareTo(r.getName())==0) {
-                        if (this.getExperience() < Integer.MAX_VALUE){
+                        if (super.getExperience() < Integer.MAX_VALUE){
                             ExperienceManager experienceManager = new ExperienceManager(new RequestStrategy());
                             experienceManager.updateExperience(user);
                         }
+                        found = true;
                         user.notifyUser("Your request regarding: " + r.getDescription() + "has been solved!");
                         break;
                     }
-                    i++;
                 }
-                if(i == instance.getUsers().size()){
+                if(!found){
                     System.out.println("User not found!");
                     return;
-                }
-                i = 0;
-                for (Request request : requestsHolder.getRequests()) {
-                    if (request.getName().compareTo(r.getName())==0) {
-                        requestsHolder.getRequests().remove(i);
-                        break;
-                    }
-                    i++;
                 }
                 System.out.println("Request solved!");
                 break;
@@ -231,6 +250,75 @@ public class Staff extends User implements Observer {
                 System.out.println("Invalid input!");
                 break;
         }
+        scanner.nextLine();
+        instance.getRequestsHolder().removeRequest(r);
+        int i = 0;
+        for (Request req : this.requests){
+            if(req.getName().compareTo(r.getName())==0){
+                this.requests.remove(i);
+            }
+            i++;
+        }
     }
+    public void solveRequestGUI(Request r) {
+        IMDB instance = IMDB.getInstance();
+        if(instance == null){
+            System.out.println("Instance null exception!");
+            return;
+        }
+        JDialog dialog = new JDialog();
+        dialog.setTitle("Solve Request");
+        dialog.setSize(300, 200);
+        dialog.setLayout(new BoxLayout(dialog.getContentPane(), BoxLayout.Y_AXIS));
 
+        JLabel requestLabel = new JLabel("Request: " + r.getDescription());
+        dialog.add(requestLabel);
+
+        JButton solveButton = new JButton("Solve Request");
+        solveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                boolean found = false;
+                for (User user : instance.getUsers()) {
+                    if (user.getInformation().getUserName().compareTo(r.getName())==0) {
+                        if (Staff.super.getExperience() < Integer.MAX_VALUE){
+                            ExperienceManager experienceManager = new ExperienceManager(new RequestStrategy());
+                            experienceManager.updateExperience(user);
+                        }
+                        found = true;
+                        System.out.println("User found!");
+                        user.notifyUser("Your request regarding: " + r.getDescription() + "has been solved!");
+                        break;
+                    }
+                }
+                if(!found){
+                    System.out.println("User not found!");
+                    return;
+                }
+                JOptionPane.showMessageDialog(dialog, "Request solved!");
+                dialog.dispose();
+            }
+        });
+        dialog.add(solveButton);
+
+        JButton rejectButton = new JButton("Reject Request");
+        rejectButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Implement rejecting logic here
+                JOptionPane.showMessageDialog(dialog, "Request rejected!");
+                dialog.dispose();
+            }
+        });
+        dialog.add(rejectButton);
+        dialog.setVisible(true);
+        instance.getRequestsHolder().removeRequest(r);
+        int i = 0;
+        for (Request req : this.requests){
+            if(req.getName().compareTo(r.getName())==0){
+                this.requests.remove(i);
+            }
+            i++;
+        }
+    }
 }

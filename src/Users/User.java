@@ -2,6 +2,7 @@ package Users;
 
 import ProductionAndActors.T;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -19,10 +20,10 @@ public abstract class User implements Observer {
         private int id;
         private String name;
         private String country;
+        private String userName;
         private int age;
         private String gender; // F, M, N
-        private LocalDateTime birthDate;
-        private String userName;
+        private LocalDate birthDate;
 
         // Private constructor
         private Information(InformationBuilder builder) {
@@ -42,10 +43,10 @@ public abstract class User implements Observer {
             private Credentials credentials;
             private String name;
             private String country;
+            private String userName;
             private int age;
             private String gender;
-            private LocalDateTime birthDate;
-            private String userName;
+            private LocalDate birthDate;
 
             public InformationBuilder setUserName(String userName) {
                 this.userName = userName;
@@ -77,7 +78,7 @@ public abstract class User implements Observer {
                 return this;
             }
 
-            public InformationBuilder setBirthDate(LocalDateTime birthDate) {
+            public InformationBuilder setBirthDate(LocalDate birthDate) {
                 this.birthDate = birthDate;
                 return this;
             }
@@ -99,25 +100,25 @@ public abstract class User implements Observer {
         }
 
         public String getCountry() {
-            return country;
+            return this.country;
         }
 
         public int getAge() {
-            return age;
+            return this.age;
         }
 
         public String getGender() {
-            return gender;
+            return this.gender;
         }
 
-        public LocalDateTime getBirthDate() {
-            return birthDate;
+        public LocalDate getBirthDate() {
+            return this.birthDate;
         }
         public int getId() {
             return id;
         }
         public String getUserName() {
-            return userName;
+            return this.userName;
         }
     }
     private AccountType accountType;
@@ -191,7 +192,8 @@ public abstract class User implements Observer {
     }
     @Override
     public void notifyUser(String message) {
+        System.out.println(message);
         message = this.getInformation().getName() + ", you received a notification: " + "\n" + message;
-        this.getNotifications().add(message);
+        notifications.add(message);
     }
 }
